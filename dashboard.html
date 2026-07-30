@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#FFD60A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="好好生活">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>好好生活</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#0b0b0b;--bg-base:#121212;--bg-card:#1a1a1a;--bg-card-hover:#1f1f1f;
+  --bg-inset:#0f0f0f;--border:#2a2a2a;--border-light:#333;
+  --yellow:#FFD60A;--yellow-bright:#FFE600;--yellow-dim:#B8930A;--yellow-glow:rgba(255,214,10,0.15);
+  --text:#fff;--text2:#a0a0a0;--text3:#555;
+  --green:#4ADE80;--red:#F87171;--orange:#FB923C;--blue:#60A5FA;--purple:#C084FC;
+  --r:14px;--rs:10px;--sidebar-w:220px;
+}
+html{font-size:14px;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg-deep);color:var(--text);line-height:1.6;min-height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--yellow-dim)}
+button{font-family:inherit}
+input,textarea{font-family:inherit}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== App Layout ===== */
+.app{display:flex;height:100vh;height:100dvh}
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;background:var(--bg-base);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;height:100%;overflow-y:auto;z-index:200;
+  transition:transform .3s ease;
+}
+.sidebar-brand{padding:20px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#000;box-shadow:0 0 16px var(--yellow-glow);flex-shrink:0}
+.brand-text{font-size:15px;font-weight:700;letter-spacing:.3px}
+.brand-text span{color:var(--yellow)}
+.sidebar-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:3px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;
+  font-size:13.5px;color:var(--text2);cursor:pointer;border:none;background:transparent;
+  transition:background .2s,color .2s;width:100%;text-align:left;position:relative;touch-action:none;
+}
+.nav-item:hover{background:var(--bg-card);color:var(--text)}
+.nav-item.active{background:var(--yellow-glow);color:var(--yellow);font-weight:600}
+.nav-item.active .nav-icon{background:var(--yellow);color:#000}
+.nav-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--bg-card);flex-shrink:0;transition:all .2s}
+.nav-badge{margin-left:auto;font-size:10px;background:var(--yellow);color:#000;padding:1px 6px;border-radius:10px;font-weight:700}
+.nav-drag-hint{font-size:10px;color:var(--text3);text-align:center;padding:2px 10px 6px;opacity:.5}
+.nav-dragging{opacity:.4;z-index:10;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.nav-drag-mode .nav-item{cursor:grab}
+.nav-drag-mode .nav-item:not(.nav-dragging){transition:transform .2s ease}
+.sidebar-footer{padding:12px 10px;border-top:1px solid var(--border)}
+.install-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;
+  border-radius:10px;border:1px dashed var(--yellow-dim);background:transparent;
+  color:var(--yellow);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.install-btn:hover{background:var(--yellow-glow);border-style:solid}
+
+.main{flex:1;display:flex;flex-direction:column;height:100%;overflow:hidden}
+.main-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:56px;border-bottom:1px solid var(--border);
+  background:rgba(11,11,11,.8);backdrop-filter:blur(16px);flex-shrink:0;z-index:50;
+}
+.main-title{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700}
+.main-title-icon{font-size:20px}
+.main-subtitle{font-size:11px;color:var(--text3);font-weight:400}
+.main-body{flex:1;overflow-y:auto;padding:20px 24px 32px}
+.mobile-menu-btn{display:none;position:fixed;top:14px;left:14px;z-index:300;width:40px;height:40px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border);color:var(--text);font-size:18px;cursor:pointer;align-items:center;justify-content:center}
+.scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150}
+
+/* ===== Common Components ===== */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:16px;animation:fadeUp .4s ease backwards}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-h h3{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.tag-y{background:var(--yellow-glow);color:var(--yellow);border:1px solid rgba(255,214,10,.25)}
+.tag-g{background:rgba(74,222,128,.1);color:var(--green);border:1px solid rgba(74,222,128,.25)}
+.tag-r{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.25)}
+.tag-b{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.25)}
+.tag-gray{background:rgba(255,255,255,.05);color:var(--text2);border:1px solid var(--border)}
+.btn{padding:9px 16px;border-radius:9px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-y{background:var(--yellow);color:#000}.btn-y:hover{background:var(--yellow-bright)}
+.btn-o{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-o:hover{border-color:var(--yellow-dim);color:var(--yellow)}
+.btn-d{background:transparent;border:1px solid var(--border);color:var(--text3);padding:5px 10px;font-size:12px}.btn-d:hover{border-color:var(--red);color:var(--red)}
+.btn-r{background:var(--red);color:#fff}
+.input,.textarea,.select{width:100%;padding:10px 14px;border-radius:9px;background:var(--bg-inset);border:1px solid var(--border);color:var(--text);font-size:13px;outline:none;transition:border .2s}
+.input:focus,.textarea:focus,.select:focus{border-color:var(--yellow-dim)}
+.textarea{resize:vertical;min-height:80px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px}
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+.empty-icon{font-size:36px;margin-bottom:8px;opacity:.4}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.popup{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.popup.show{display:flex}
+.popup-box{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto;animation:fadeUp .3s ease}
+.popup-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.popup-h h3{font-size:16px;font-weight:700}
+.popup-close{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:16px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--yellow);color:#000;padding:10px 24px;border-radius:10px;font-size:13px;font-weight:600;z-index:999;animation:fadeUp .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+
+/* ===== Diary ===== */
+.diary-editor{background:var(--bg-inset);border:1px solid var(--border);border-radius:var(--rs);padding:14px;margin-bottom:14px}
+.diary-editor:focus-within{border-color:var(--yellow-dim)}
+.diary-area{min-height:140px;font-size:14px;line-height:1.8;color:var(--text);outline:none}
+.diary-area:empty::before{content:attr(data-ph);color:var(--text3)}
+.diary-tools{display:flex;align-items:center;gap:6px;padding-top:10px;margin-top:10px;border-top:1px solid var(--border)}
+.t-btn{width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:13px;transition:all .2s}
+.t-btn:hover{color:var(--yellow);border-color:var(--yellow-dim);background:var(--yellow-glow)}
+.t-btn.active{color:var(--yellow);border-color:var(--yellow-dim)}
+.diary-ts{margin-left:auto;font-size:11px;color:var(--text3)}
+.diary-list{display:flex;flex-direction:column;gap:8px}
+.diary-entry{padding:12px 14px;border-radius:var(--rs);background:var(--bg-inset);border:1px solid var(--border);transition:border .2s}
+.diary-entry:hover{border-color:var(--yellow-dim)}
+.diary-entry-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.diary-entry-date{font-size:12px;color:var(--yellow);font-weight:600}
+.diary-entry-body{font-size:13px;color:var(--text2);line-height:1.6;max-height:100px;overflow:hidden}
+.emoji-picker{display:flex;flex-wrap:wrap;gap:4px;padding:10px;background:var(--bg-inset);border-radius:8px;margin-top:8px}
+.emoji-picker span{font-size:20px;cursor:pointer;padding:2px 4px;border-radius:4px;transition:background .15s}
+.emoji-picker span:hover{background:var(--bg-card)}
+
+/* ===== Notes ===== */
+.note-add{display:flex;gap:8px;margin-bottom:14px}
+.note-add .input{flex:1}
+.note-add-btn{width:40px;height:40px;border-radius:9px;background:var(--yellow);color:#000;border:none;font-size:18px;cursor:pointer;flex-shrink:0}
+.note-list{position:relative}
+.note-list::before{content:'';position:absolute;left:7px;top:8px;bottom:8px;width:1px;background:var(--border)}
+.note-item{position:relative;padding-left:28px;margin-bottom:10px}
+.note-item::before{content:'';position:absolute;left:4px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--yellow);border:2px solid var(--bg-card)}
+.note-box{padding:10px 14px;border-radius:var(--rs);background:var(--bg-inset);border:1px solid var(--border);transition:border .2s}
+.note-box:hover{border-color:var(--yellow-dim)}
+.note-txt{font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.note-meta{display:flex;align-items:center;gap:8px;margin-top:6px}
+.note-time{font-size:11px;color:var(--text3)}
+.note-del{margin-left:auto;font-size:11px;color:var(--text3);cursor:pointer;background:none;border:none;padding:2px 6px;border-radius:4px}
+.note-del:hover{color:var(--red)}
+
+/* ===== Media ===== */
+.media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.media-card{background:var(--bg-inset);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;transition:all .2s;position:relative}
+.media-card:hover{border-color:var(--yellow-dim);transform:translateY(-2px)}
+.media-cover{height:110px;background:var(--border);position:relative;display:flex;align-items:center;justify-content:center;font-size:32px}
+.media-badge{position:absolute;top:8px;left:8px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;color:#fff}
+.media-rating{position:absolute;bottom:8px;right:8px;display:flex;align-items:center;gap:2px;background:rgba(0,0,0,.7);padding:3px 8px;border-radius:4px;font-size:12px;font-weight:700;color:var(--yellow)}
+.media-info{padding:12px}
+.media-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.media-thought{font-size:12px;color:var(--text2);line-height:1.5}
+.media-quote{font-size:11px;color:var(--text3);margin-top:8px;padding:8px;background:rgba(255,214,10,.05);border-left:2px solid var(--yellow-dim);border-radius:4px;font-style:italic;line-height:1.5}
+.media-del{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:6px;background:rgba(0,0,0,.6);border:none;color:#fff;font-size:12px;cursor:pointer;opacity:0;transition:opacity .2s}
+.media-card:hover .media-del{opacity:1}
+.media-del:hover{background:var(--red)}
+.star-pick{display:flex;gap:3px;margin-bottom:8px}
+.star-pick span{font-size:20px;cursor:pointer;opacity:.4;transition:opacity .15s}
+.star-pick span.on{opacity:1}
+
+/* ===== Accounting ===== */
+.acct-overview{display:flex;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.acct-total{flex:1;min-width:200px;background:linear-gradient(135deg,rgba(255,214,10,.08),rgba(255,214,10,.02));border:1px solid rgba(255,214,10,.2);border-radius:var(--rs);padding:18px}
+.acct-total-l{font-size:12px;color:var(--text2)}
+.acct-total-v{font-size:28px;font-weight:800;color:var(--yellow);margin-top:4px}
+.acct-accounts{display:flex;flex-direction:column;gap:6px;min-width:200px;flex:1}
+.acct-acc{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;border-radius:8px;background:var(--bg-inset);border:1px solid var(--border);font-size:12px;transition:border .2s}
+.acct-acc:hover{border-color:var(--yellow-dim)}
+.acct-acc-n{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+.acct-acc-ic{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0}
+.acct-name,.acct-bal{outline:none;border-radius:4px;padding:2px 6px;transition:all .2s;cursor:text;border:1px solid transparent;min-width:30px}
+.acct-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-name:hover,.acct-bal:hover{background:var(--bg-card);border-color:var(--border)}
+.acct-name:focus,.acct-bal:focus{background:var(--bg-deep);border-color:var(--yellow-dim)}
+.acct-bal{text-align:right;font-weight:600;white-space:nowrap}
+.acct-acc-del{width:20px;height:20px;border-radius:5px;border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:11px;flex-shrink:0;opacity:0;transition:opacity .2s}
+.acct-acc:hover .acct-acc-del{opacity:1}
+.acct-acc-del:hover{color:var(--red)}
+
+/* Transaction type toggle */
+.trans-type-toggle{display:flex;gap:4px;padding:3px;background:var(--bg-inset);border-radius:9px;border:1px solid var(--border);margin-bottom:12px}
+.trans-type-btn{flex:1;padding:9px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2);transition:all .2s}
+#ttExpense.active{background:var(--red);color:#fff}
+#ttIncome.active{background:var(--green);color:#000}
+
+/* Period summary */
+.acct-period-label{font-size:13px;color:var(--text2);margin-bottom:10px;font-weight:600}
+.acct-summary-row{display:flex;gap:10px;margin-bottom:14px}
+.acct-sum-box{flex:1;padding:14px 10px;border-radius:var(--rs);border:1px solid var(--border);text-align:center}
+.acct-sum-box.income{background:rgba(74,222,128,.05);border-color:rgba(74,222,128,.15)}
+.acct-sum-box.expense{background:rgba(248,113,113,.05);border-color:rgba(248,113,113,.15)}
+.acct-sum-box.net.positive{background:rgba(255,214,10,.05);border-color:rgba(255,214,10,.15)}
+.acct-sum-box.net.negative{background:rgba(248,113,113,.05);border-color:rgba(248,113,113,.15)}
+.acct-sum-l{font-size:11px;color:var(--text3);margin-bottom:4px}
+.acct-sum-v{font-size:17px;font-weight:700}
+.acct-sum-box.income .acct-sum-v{color:var(--green)}
+.acct-sum-box.expense .acct-sum-v{color:var(--red)}
+.acct-sum-box.net.positive .acct-sum-v{color:var(--yellow)}
+.acct-sum-box.net.negative .acct-sum-v{color:var(--red)}
+.acct-bar-chart{margin-bottom:4px}
+.acct-bar-container{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--bg-inset)}
+.acct-bar{height:100%;transition:width .3s ease}
+.acct-bar.income-bar{background:var(--green)}
+.acct-bar.expense-bar{background:var(--red)}
+
+.acct-chart-row{display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.acct-pie{flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.acct-legend{flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px}
+.acct-leg{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;font-size:12px;background:var(--bg-inset);border:1px solid var(--border)}
+.acct-leg-l{display:flex;align-items:center;gap:8px}
+.acct-leg-d{width:10px;height:10px;border-radius:3px}
+.acct-trans{margin-top:8px}
+.acct-trans-list{display:flex;flex-direction:column;gap:5px}
+.acct-tr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--bg-inset);border:1px solid var(--border);font-size:12px;transition:border .2s}
+.acct-tr:hover{border-color:var(--yellow-dim)}
+.acct-tr-cat{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.acct-tr-info{flex:1;min-width:0}
+.acct-tr-desc{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-tr-meta{font-size:11px;color:var(--text3)}
+.acct-tr-amt{font-weight:700;color:var(--red);white-space:nowrap}
+.acct-tr-amt.income{color:var(--green)}
+.acct-tr-del{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:12px;flex-shrink:0}
+.acct-tr-del:hover{border-color:var(--red);color:var(--red)}
+
+/* ===== Calendar ===== */
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.cal-m{font-size:16px;font-weight:700}
+.cal-nav{display:flex;gap:6px;align-items:center}
+.cal-nav-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s}
+.cal-nav-btn:hover{border-color:var(--yellow);color:var(--yellow)}
+.cal-toggle{display:flex;gap:2px;padding:2px;background:var(--bg-inset);border-radius:8px;border:1px solid var(--border)}
+.cal-tg-btn{padding:4px 12px;border-radius:6px;border:none;font-size:12px;cursor:pointer;background:transparent;color:var(--text2);transition:all .2s}
+.cal-tg-btn.active{background:var(--yellow);color:#000;font-weight:600}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dn{text-align:center;font-size:11px;color:var(--text3);padding:4px 0;font-weight:600}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .2s;border:1px solid transparent;position:relative}
+.cal-day:hover{background:var(--bg-inset);border-color:var(--border)}
+.cal-day.other{color:var(--text3);opacity:.4}
+.cal-day.today{background:var(--yellow);color:#000;font-weight:700}
+.cal-day.has-task::after{content:'';position:absolute;bottom:4px;width:5px;height:5px;border-radius:50%;background:var(--yellow)}
+.cal-day.today.has-task::after{background:#000}
+.cal-day.sel{border-color:var(--yellow)}
+.todo-list{margin-top:16px}
+.todo-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:var(--bg-inset);border:1px solid var(--border);margin-bottom:6px;transition:border .2s}
+.todo-item:hover{border-color:var(--yellow-dim)}
+.todo-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border-light);cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.todo-check.done{background:var(--yellow);border-color:var(--yellow)}
+.todo-check.done::after{content:'\2713';color:#000;font-size:12px;font-weight:700}
+.todo-content{flex:1;min-width:0}
+.todo-text{font-size:13px}
+.todo-text.done{text-decoration:line-through;color:var(--text3)}
+.todo-meta{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
+.todo-time{font-size:11px;color:var(--text3);cursor:pointer;border-radius:4px;padding:1px 4px;transition:all .2s}
+.todo-time:hover{background:var(--bg-card);color:var(--yellow)}
+.todo-pri{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.todo-pri.high{background:var(--red)}
+.todo-pri.medium{background:var(--orange)}
+.todo-pri.low{background:var(--green)}
+.todo-del{margin-left:auto;font-size:11px;color:var(--text3);cursor:pointer;background:none;border:none;padding:2px 6px;border-radius:4px}
+.todo-del:hover{color:var(--red)}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .mobile-menu-btn{display:flex}
+  .scrim.show{display:block}
+  .main-body{padding:16px 14px 32px}
+  .main-header{padding:0 14px 0 64px}
+  .media-grid{grid-template-columns:1fr}
+  .acct-chart-row{flex-direction:column}
+  .acct-summary-row{flex-direction:column}
+  .acct-overview{flex-direction:column}
+  .cal-h{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">07</div>
+      <div class="brand-text">好好<span>生活</span></div>
+    </div>
+    <nav class="sidebar-nav" id="nav"></nav>
+    <div class="sidebar-footer">
+      <button class="install-btn" id="installBtn" style="display:none">📱 安装到手机</button>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <header class="main-header">
+      <div class="main-title" id="mainTitle"></div>
+    </header>
+    <div class="main-body" id="view"></div>
+  </div>
+</div>
+
+<button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+
+<div class="popup" id="popup">
+  <div class="popup-box" id="popupBox"></div>
+</div>
+
+<script>
+// ====== Data Store ======
+const DB={
+  get(k,d){try{const v=localStorage.getItem('hhsh_'+k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){localStorage.setItem('hhsh_'+k,JSON.stringify(v))}
+};
+
+// ====== Module Definitions ======
+const MODULES_DEF=[
+  {id:'diary',icon:'📖',name:'智能日记',sub:'记录每一天的成长'},
+  {id:'notes',icon:'💡',name:'灵感速记',sub:'便签式无压记录 · 时间流'},
+  {id:'media',icon:'🎬',name:'观影阅读录',sub:'影视 · 书籍 · 观后感摘抄'},
+  {id:'accounting',icon:'💰',name:'记账看板',sub:'多账户汇总 · 收支分析'},
+  {id:'calendar',icon:'🗓',name:'日历待办',sub:'时间线 · 优先级 · 提醒'},
+];
+
+function loadModules(){
+  const saved=DB.get('module_order',null);
+  if(saved&&Array.isArray(saved)){
+    const ordered=saved.map(id=>MODULES_DEF.find(m=>m.id===id)).filter(Boolean);
+    MODULES_DEF.forEach(m=>{if(!ordered.find(o=>o.id===m.id))ordered.push(m)});
+    return ordered;
+  }
+  return[...MODULES_DEF];
+}
+let MODULES=loadModules();
+
+// ====== State ======
+let curModule='diary';
+let deferredPrompt=null;
+
+// ====== Utilities ======
+function $(s,p=document){return p.querySelector(s)}
+function $$(s,p=document){return p.querySelectorAll(s)}
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function fmtDate(d){const dt=new Date(d);return `${dt.getMonth()+1}/${dt.getDate()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`}
+function fmtDateFull(d){const dt=new Date(d);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`}
+function todayKey(){return fmtDateFull(new Date())}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function fmtMoney(n){return '¥'+Number(n).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function toast(msg){const t=el('div','toast',msg);document.body.appendChild(t);setTimeout(()=>t.remove(),2000)}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function showPopup(html){$('#popupBox').innerHTML=html;$('#popup').classList.add('show')}
+function closePopup(){$('#popup').classList.remove('show')}
+function confirmDialog(title,msg,onConfirm,confirmText){
+  showPopup(`
+    <div class="popup-h"><h3>${title}</h3><button class="popup-close" onclick="closePopup()">✕</button></div>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:18px;line-height:1.6">${msg}</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-o" style="flex:1" onclick="closePopup()">取消</button>
+      <button class="btn btn-r" style="flex:1" id="confirmDelBtn">${confirmText||'删除'}</button>
+    </div>`);
+  $('#confirmDelBtn').onclick=()=>{closePopup();onConfirm()};
+}
+
+// ====== Navigation ======
+function buildNav(){
+  const nav=$('#nav');
+  nav.innerHTML='';
+  const hint=el('div','nav-drag-hint','⠿ 长按拖动调整顺序');
+  nav.appendChild(hint);
+  MODULES.forEach(m=>{
+    const badge=getBadge(m.id);
+    const btn=el('button','nav-item'+(m.id===curModule?' active':''));
+    btn.dataset.moduleId=m.id;
+    btn.innerHTML=`<span class="nav-icon">${m.icon}</span><span>${m.name}</span>${badge?`<span class="nav-badge">${badge}</span>`:''}`;
+    nav.appendChild(btn);
+  });
+}
+function getBadge(id){
+  if(id==='calendar'){
+    const todos=DB.get('todos',[]);
+    const today=todayKey();
+    return todos.filter(t=>!t.completed&&t.deadline===today).length||'';
+  }
+  return'';
+}
+function navigate(id){
+  curModule=id;
+  buildNav();
+  const m=MODULES.find(x=>x.id===id);
+  $('#mainTitle').innerHTML=`<span class="main-title-icon">${m.icon}</span><div><div>${m.name}</div><div class="main-subtitle">${m.sub}</div></div>`;
+  render();
+  $('#sidebar').classList.remove('open');
+  $('#scrim').classList.remove('show');
+  $('#view').scrollTop=0;
+}
+function render(){
+  const v=$('#view');
+  v.innerHTML='';
+  Modules[curModule](v);
+}
+
+// ====== Nav Drag (long-press reorder) ======
+let suppressNavClick=false;
+let navDragState=null;
+
+function setupNavInteractions(){
+  const nav=$('#nav');
+
+  nav.addEventListener('click',e=>{
+    if(suppressNavClick){suppressNavClick=false;return}
+    const item=e.target.closest('.nav-item');
+    if(item)navigate(item.dataset.moduleId);
+  });
+
+  nav.addEventListener('pointerdown',e=>{
+    const item=e.target.closest('.nav-item');
+    if(!item)return;
+    const items=Array.from(nav.querySelectorAll('.nav-item'));
+    const idx=items.indexOf(item);
+    navDragState={item,items,idx,startY:e.clientY,timer:null,active:false,target:idx};
+    navDragState.timer=setTimeout(()=>{
+      if(!navDragState)return;
+      navDragState.active=true;
+      suppressNavClick=true;
+      navDragState.item.classList.add('nav-dragging');
+      nav.classList.add('nav-drag-mode');
+      try{nav.setPointerCapture(e.pointerId)}catch(err){}
+    },500);
+  });
+
+  nav.addEventListener('pointermove',e=>{
+    if(!navDragState)return;
+    if(!navDragState.active){
+      if(Math.abs(e.clientY-navDragState.startY)>8){
+        clearTimeout(navDragState.timer);
+        navDragState=null;
+      }
+      return;
+    }
+    e.preventDefault();
+    const deltaY=e.clientY-navDragState.startY;
+    navDragState.item.style.transform=`translateY(${deltaY}px)`;
+    const itemRect=navDragState.item.getBoundingClientRect();
+    const itemCenter=itemRect.top+itemRect.height/2;
+    let target=navDragState.idx;
+    navDragState.items.forEach((other,i)=>{
+      if(i===navDragState.idx)return;
+      other.style.transform='';
+      const rect=other.getBoundingClientRect();
+      const center=rect.top+rect.height/2;
+      if(i<navDragState.idx&&itemCenter<center){
+        other.style.transform=`translateY(${itemRect.height+4}px)`;
+        target=Math.min(target,i);
+      }
+      if(i>navDragState.idx&&itemCenter>center){
+        other.style.transform=`translateY(${-(itemRect.height+4)}px)`;
+        target=Math.max(target,i);
+      }
+    });
+    navDragState.target=target;
+  });
+
+  const endDrag=()=>{
+    if(!navDragState)return;
+    clearTimeout(navDragState.timer);
+    if(navDragState.active){
+      navDragState.items.forEach(item=>{
+        item.style.transform='';
+        item.classList.remove('nav-dragging');
+      });
+      nav.classList.remove('nav-drag-mode');
+      if(navDragState.target!==navDragState.idx){
+        const moved=MODULES.splice(navDragState.idx,1)[0];
+        MODULES.splice(navDragState.target,0,moved);
+        DB.set('module_order',MODULES.map(m=>m.id));
+        buildNav();
+        toast('✅ 模块顺序已更新');
+      }
+    }
+    navDragState=null;
+  };
+  nav.addEventListener('pointerup',endDrag);
+  nav.addEventListener('pointercancel',endDrag);
+}
+
+// ====== Module: Diary ======
+const emojiList=['😀','😊','🤔','💪','🎯','📚','🏃','😴','🥗','💧','☀️','🌙','🔥','✨','🎉','😌','😮‍💨','🤧'];
+
+function renderDiary(v){
+  const ts=DB.get('diary_lastEdit','');
+  const card=el('div','card');
+  card.innerHTML=`
+    <div class="card-h"><h3>✏️ 今日日记</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-o" onclick="toggleEmoji()">😊 表情</button>
+        <button class="btn btn-y" onclick="saveDiary()">💾 保存</button>
+      </div>
+    </div>
+    <div class="diary-editor">
+      <div class="diary-area" id="diaryArea" contenteditable="true" data-ph="写下今天的故事……"></div>
+      <div class="diary-tools">
+        <button class="t-btn" onclick="fmt('bold')"><b>B</b></button>
+        <button class="t-btn" onclick="fmt('italic')"><i>I</i></button>
+        <button class="t-btn" onclick="fmt('underline')"><u>U</u></button>
+        <button class="t-btn" onclick="fmt('insertUnorderedList')">•</button>
+        <span class="diary-ts" id="diaryTs">${ts?'最后编辑: '+fmtDate(ts):'尚未保存'}</span>
+      </div>
+      <div class="emoji-picker" id="emojiPicker" style="display:none">
+        ${emojiList.map(e=>`<span onclick="insertEmoji('${e}')">${e}</span>`).join('')}
+      </div>
+    </div>`;
+  v.appendChild(card);
+
+  const drafts=DB.get('diary_drafts',{});
+  const dk=todayKey();
+  if(drafts[dk]){$('#diaryArea',card).innerHTML=drafts[dk].content}
+
+  let saveTimer;
+  $('#diaryArea',card).addEventListener('input',e=>{
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(()=>{
+      drafts[dk]={content:e.target.innerHTML,t:Date.now()};
+      DB.set('diary_drafts',drafts);
+      DB.set('diary_lastEdit',Date.now());
+      $('#diaryTs').textContent='自动保存: '+fmtDate(Date.now());
+    },1500);
+  });
+
+  const entries=DB.get('diary_entries',[]).sort((a,b)=>b.date-a.date);
+  const hist=el('div','card');
+  hist.innerHTML=`<div class="card-h"><h3>📜 历史日记</h3><span class="tag tag-gray">${entries.length} 篇</span></div>`;
+  if(entries.length===0){
+    hist.innerHTML+='<div class="empty"><div class="empty-icon">📝</div>暂无历史日记，开始你的第一篇吧</div>';
+  }else{
+    const list=el('div','diary-list');
+    entries.slice(0,20).forEach(e=>{
+      const item=el('div','diary-entry');
+      item.innerHTML=`<div class="diary-entry-h"><span class="diary-entry-date">${fmtDateFull(e.date)}</span>
+        <button class="btn-d" onclick="delDiary('${e.id}')">删除</button></div>
+        <div class="diary-entry-body">${e.content.replace(/<[^>]+>/g,' ').slice(0,150)}${e.content.length>150?'…':''}</div>`;
+      list.appendChild(item);
+    });
+    hist.appendChild(list);
+  }
+  v.appendChild(hist);
+}
+function toggleEmoji(){const p=$('#emojiPicker');p.style.display=p.style.display==='none'?'flex':'none'}
+function insertEmoji(e){const area=$('#diaryArea');area.focus();document.execCommand('insertText',false,e)}
+function fmt(cmd){document.execCommand(cmd,false,null);$('#diaryArea').focus()}
+function saveDiary(){
+  const area=$('#diaryArea');
+  const content=area.innerHTML.trim();
+  if(!content||content==='<br>'){toast('日记内容为空');return}
+  const entries=DB.get('diary_entries',[]);
+  const dk=todayKey();
+  const existing=entries.findIndex(e=>fmtDateFull(e.date)===dk);
+  const entry={id:existing>=0?entries[existing].id:uid(),date:Date.now(),content};
+  if(existing>=0)entries[existing]=entry;else entries.push(entry);
+  DB.set('diary_entries',entries);
+  DB.set('diary_lastEdit',Date.now());
+  $('#diaryTs').textContent='已保存: '+fmtDate(Date.now());
+  toast('✅ 日记已保存');
+}
+function delDiary(id){
+  confirmDialog('删除日记','确定删除这篇日记吗？此操作不可撤销。',()=>{
+    DB.set('diary_entries',DB.get('diary_entries',[]).filter(e=>e.id!==id));
+    render();
+    toast('已删除');
+  });
+}
+
+// ====== Module: Notes ======
+function renderNotes(v){
+  const card=el('div','card');
+  card.innerHTML=`
+    <div class="card-h"><h3>⚡ 快速记录</h3></div>
+    <div class="note-add">
+      <input class="input" id="noteInput" placeholder="一闪而过的灵感…" onkeydown="if(event.key==='Enter')addNote()">
+      <button class="note-add-btn" onclick="addNote()">+</button>
+    </div>
+    <button class="btn btn-o" style="width:100%;margin-bottom:14px" onclick="showAddLink()">🔗 添加链接收藏</button>`;
+  v.appendChild(card);
+
+  const notes=DB.get('notes',[]).sort((a,b)=>b.date-a.date);
+  const list=el('div','card');
+  list.innerHTML=`<div class="card-h"><h3>📋 灵感时间流</h3><span class="tag tag-gray">${notes.length} 条</span></div>`;
+  if(notes.length===0){
+    list.innerHTML+='<div class="empty"><div class="empty-icon">💡</div>暂无记录，开始记录你的灵感吧</div>';
+  }else{
+    const tl=el('div','note-list');
+    notes.forEach(n=>{
+      const item=el('div','note-item');
+      let extra='';
+      if(n.type==='link'){
+        extra=`<div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;margin-top:8px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.15)"><span>🔗</span><a href="${n.linkUrl}" target="_blank" style="font-size:12px;color:var(--blue);text-decoration:none">${escHtml(n.linkTitle||n.linkUrl)}</a></div>`;
+      }
+      item.innerHTML=`<div class="note-box">
+        <div class="note-txt">${escHtml(n.content)}</div>
+        ${extra}
+        <div class="note-meta"><span class="note-time">${fmtDate(n.date)}</span>
+        ${n.type==='link'?'<span class="tag tag-b">链接</span>':'<span class="tag tag-y">灵感</span>'}
+        <button class="note-del" onclick="delNote('${n.id}')">删除</button></div></div>`;
+      tl.appendChild(item);
+    });
+    list.appendChild(tl);
+  }
+  v.appendChild(list);
+}
+function addNote(){
+  const input=$('#noteInput');
+  const txt=input.value.trim();
+  if(!txt)return;
+  const notes=DB.get('notes',[]);
+  notes.push({id:uid(),content:txt,type:'text',date:Date.now()});
+  DB.set('notes',notes);
+  input.value='';
+  render();
+}
+function showAddLink(){
+  showPopup(`
+    <div class="popup-h"><h3>🔗 添加链接收藏</h3><button class="popup-close" onclick="closePopup()">✕</button></div>
+    <div class="field"><label>链接 URL</label><input class="input" id="linkUrl" placeholder="https://…"></div>
+    <div class="field"><label>标题（可选）</label><input class="input" id="linkTitle" placeholder="链接标题"></div>
+    <div class="field"><label>备注</label><textarea class="textarea" id="linkNote" placeholder="为什么收藏这个链接？" style="min-height:50px"></textarea></div>
+    <button class="btn btn-y" style="width:100%" onclick="saveLink()">保存收藏</button>
+  `);
+}
+function saveLink(){
+  const url=$('#linkUrl').value.trim();
+  const title=$('#linkTitle').value.trim();
+  const note=$('#linkNote').value.trim();
+  if(!url){toast('请输入链接');return}
+  const notes=DB.get('notes',[]);
+  notes.push({id:uid(),content:note||title||url,type:'link',linkUrl:url,linkTitle:title,date:Date.now()});
+  DB.set('notes',notes);
+  closePopup();
+  render();
+  toast('✅ 链接已收藏');
+}
+function delNote(id){
+  DB.set('notes',DB.get('notes',[]).filter(n=>n.id!==id));
+  render();
+}
+
+// ====== Module: Media ======
+function renderMedia(v){
+  const card=el('div','card');
+  card.innerHTML=`
+    <div class="card-h"><h3>➕ 添加观影/阅读记录</h3>
+      <button class="btn btn-y" onclick="showAddMedia()">+ 添加</button>
+    </div>`;
+  v.appendChild(card);
+
+  const items=DB.get('media_items',[]).sort((a,b)=>b.date-a.date);
+  if(items.length===0){
+    card.innerHTML+='<div class="empty"><div class="empty-icon">🎬</div>暂无记录，添加你的第一条观后感吧</div>';
+    return;
+  }
+  const grid=el('div','media-grid');
+  const typeData={movie:{icon:'🎬',label:'电影',color:'#F87171'},book:{icon:'📚',label:'书籍',color:'#60A5FA'},novel:{icon:'📖',label:'小说',color:'#C084FC'}};
+  items.forEach(m=>{
+    const td=typeData[m.type]||typeData.movie;
+    const c=el('div','media-card');
+    c.innerHTML=`
+      <button class="media-del" onclick="delMedia('${m.id}')">✕</button>
+      <div class="media-cover" style="background:linear-gradient(135deg,var(--bg-card),var(--bg-inset))">
+        ${td.icon}
+        <div class="media-badge" style="background:${td.color}">${td.label}</div>
+        <div class="media-rating">⭐ ${m.rating}</div>
+      </div>
+      <div class="media-info">
+        <div class="media-title">${escHtml(m.title)}</div>
+        <div class="media-thought">${escHtml(m.thought||'')}</div>
+        ${m.quote?`<div class="media-quote">"${escHtml(m.quote)}"</div>`:''}
+      </div>`;
+    grid.appendChild(c);
+  });
+  v.appendChild(grid);
+}
+function showAddMedia(){
+  showPopup(`
+    <div class="popup-h"><h3>添加观影/阅读记录</h3><button class="popup-close" onclick="closePopup()">✕</button></div>
+    <div class="field"><label>类型</label>
+      <select class="select" id="mType">
+        <option value="movie">🎬 电影</option>
+        <option value="book">📚 书籍</option>
+        <option value="novel">📖 小说</option>
+      </select>
+    </div>
+    <div class="field"><label>标题</label><input class="input" id="mTitle" placeholder="作品名称"></div>
+    <div class="field"><label>评分</label>
+      <div class="star-pick" id="starPick">
+        ${[1,2,3,4,5].map(i=>`<span data-v="${i}" onclick="pickStar(${i})">⭐</span>`).join('')}
+      </div>
+      <input type="hidden" id="mRating" value="5">
+    </div>
+    <div class="field"><label>观后感</label><textarea class="textarea" id="mThought" placeholder="你的感受和评价…"></textarea></div>
+    <div class="field"><label>摘抄（可选）</label><textarea class="textarea" id="mQuote" placeholder="印象深刻的句子…" style="min-height:50px"></textarea></div>
+    <button class="btn btn-y" style="width:100%" onclick="saveMedia()">保存记录</button>
+  `);
+  $$('#starPick span').forEach(s=>s.classList.add('on'));
+}
+function pickStar(v){
+  $('#mRating').value=v;
+  $$('#starPick span').forEach(s=>s.classList.toggle('on',parseInt(s.dataset.v)<=v));
+}
+function saveMedia(){
+  const title=$('#mTitle').value.trim();
+  if(!title){toast('请输入标题');return}
+  const items=DB.get('media_items',[]);
+  items.push({id:uid(),title,type:$('#mType').value,rating:$('#mRating').value,thought:$('#mThought').value.trim(),quote:$('#mQuote').value.trim(),date:Date.now()});
+  DB.set('media_items',items);
+  closePopup();
+  render();
+  toast('✅ 已添加');
+}
+function delMedia(id){
+  confirmDialog('删除记录','确定删除这条记录吗？',()=>{
+    DB.set('media_items',DB.get('media_items',[]).filter(m=>m.id!==id));
+    render();
+    toast('已删除');
+  });
+}
+
+// ====== Module: Accounting ======
+const CATEGORIES=[
+  {key:'food',icon:'🍔',label:'餐饮',color:'#FFD60A'},
+  {key:'shop',icon:'🛍',label:'购物',color:'#F87171'},
+  {key:'transport',icon:'🚌',label:'交通',color:'#60A5FA'},
+  {key:'study',icon:'📚',label:'学习',color:'#4ADE80'},
+  {key:'other',icon:'📦',label:'其他',color:'#C084FC'},
+];
+const INCOME_CATEGORIES=[
+  {key:'salary',icon:'💼',label:'工资',color:'#4ADE80'},
+  {key:'bonus',icon:'🎁',label:'奖金',color:'#60A5FA'},
+  {key:'invest',icon:'📈',label:'投资',color:'#C084FC'},
+  {key:'transfer',icon:'🔄',label:'转账',color:'#FFD60A'},
+  {key:'other_in',icon:'📦',label:'其他',color:'#FB923C'},
+];
+const ACC_ICONS=[
+  {key:'bank',icon:'🏦',label:'银行',color:'#DC3545'},
+  {key:'wechat',icon:'💚',label:'微信',color:'#07C160'},
+  {key:'alipay',icon:'💙',label:'支付宝',color:'#1677FF'},
+  {key:'cash',icon:'💵',label:'现金',color:'#FA8C16'},
+  {key:'other',icon:'💳',label:'其他',color:'#6B7280'},
+];
+const ALL_CATS=[...CATEGORIES,...INCOME_CATEGORIES];
+let acctPeriod='month';
+
+function renderAccounting(v){
+  let accounts=DB.get('accounts',[]);
+  const transactions=DB.get('transactions',[]).sort((a,b)=>b.date-a.date);
+
+  if(accounts.length===0){
+    const defaults=[
+      {id:uid(),name:'工商银行',type:'bank',balance:12300,color:'#DC3545'},
+      {id:uid(),name:'微信钱包',type:'wechat',balance:2865,color:'#07C160'},
+      {id:uid(),name:'支付宝',type:'alipay',balance:5200,color:'#1677FF'},
+    ];
+    DB.set('accounts',defaults);
+    accounts=defaults;
+  }
+
+  const totalBal=accounts.reduce((s,a)=>s+a.balance,0);
+
+  // Overview
+  const card=el('div','card');
+  card.innerHTML=`
+    <div class="card-h"><h3>💰 账户总览</h3>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-o" onclick="showAddAccount()">+ 账户</button>
+        <button class="btn btn-y" onclick="showAddTrans()">+ 记一笔</button>
+      </div>
+    </div>
+    <div class="acct-overview">
+      <div class="acct-total">
+        <div class="acct-total-l">全账户总余额</div>
+        <div class="acct-total-v">${fmtMoney(totalBal)}</div>
+      </div>
+      <div class="acct-accounts">
+        ${accounts.map(a=>{
+          const ai=ACC_ICONS.find(i=>i.key===a.type)||ACC_ICONS[4];
+          return `<div class="acct-acc" data-id="${a.id}">
+            <div class="acct-acc-n">
+              <div class="acct-acc-ic" style="background:${a.color||ai.color}">${ai.icon}</div>
+              <span class="acct-name" contenteditable="true" onblur="editAccountName('${a.id}',this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${escHtml(a.name)}</span>
+            </div>
+            <span class="acct-bal" contenteditable="true" onblur="editAccountBal('${a.id}',this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${a.balance.toLocaleString('zh-CN')}</span>
+            <button class="acct-acc-del" onclick="delAccount('${a.id}')">✕</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">💡 点击账户名称或余额可直接编辑</div>`;
+  v.appendChild(card);
+
+  // Period summary
+  renderAcctSummary(v,transactions);
+
+  // Transactions
+  const transCard=el('div','card');
+  transCard.innerHTML=`<div class="card-h"><h3>💳 交易记录</h3><span class="tag tag-gray">${transactions.length} 笔</span></div>`;
+  if(transactions.length===0){
+    transCard.innerHTML+='<div class="empty"><div class="empty-icon">🧾</div>暂无交易记录</div>';
+  }else{
+    const tl=el('div','acct-trans-list');
+    transactions.slice(0,30).forEach(t=>{
+      const acc=accounts.find(a=>a.id===t.accountId);
+      const cat=ALL_CATS.find(c=>c.key===t.category)||CATEGORIES[4];
+      const isIncome=t.type==='income';
+      const item=el('div','acct-tr');
+      item.innerHTML=`<div class="acct-tr-cat" style="background:${cat.color}22">${cat.icon}</div>
+        <div class="acct-tr-info"><div class="acct-tr-desc">${escHtml(t.note||cat.label)}</div>
+        <div class="acct-tr-meta">${cat.label} · ${acc?escHtml(acc.name):'未知账户'} · ${fmtDate(t.date)}</div></div>
+        <div class="acct-tr-amt ${isIncome?'income':''}">${isIncome?'+':'-'}¥${t.amount.toLocaleString('zh-CN')}</div>
+        <button class="acct-tr-del" onclick="delTrans('${t.id}')">✕</button>`;
+      tl.appendChild(item);
+    });
+    transCard.appendChild(tl);
+  }
+  v.appendChild(transCard);
+}
+
+function renderAcctSummary(v,transactions){
+  const now=new Date();
+  let startDate,endDate,periodLabel;
+  if(acctPeriod==='year'){
+    startDate=new Date(now.getFullYear(),0,1);
+    endDate=new Date(now.getFullYear()+1,0,1);
+    periodLabel=`${now.getFullYear()}年`;
+  }else if(acctPeriod==='month'){
+    startDate=new Date(now.getFullYear(),now.getMonth(),1);
+    endDate=new Date(now.getFullYear(),now.getMonth()+1,1);
+    periodLabel=`${now.getFullYear()}年${now.getMonth()+1}月`;
+  }else if(acctPeriod==='week'){
+    const day=now.getDay()||7;
+    startDate=new Date(now);
+    startDate.setDate(now.getDate()-day+1);
+    startDate.setHours(0,0,0,0);
+    endDate=new Date(startDate);
+    endDate.setDate(startDate.getDate()+7);
+    periodLabel='本周';
+  }else{
+    startDate=new Date(now);
+    startDate.setHours(0,0,0,0);
+    endDate=new Date(startDate);
+    endDate.setDate(startDate.getDate()+1);
+    periodLabel='今日';
+  }
+
+  const periodTrans=transactions.filter(t=>{
+    const d=new Date(t.date);
+    return d>=startDate&&d<endDate;
+  });
+  const income=periodTrans.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense=periodTrans.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const net=income-expense;
+
+  const catTotals={};
+  periodTrans.filter(t=>t.type==='expense').forEach(t=>{catTotals[t.category]=(catTotals[t.category]||0)+t.amount});
+
+  const total=income+expense;
+  const incomePct=total>0?Math.round(income/total*100):0;
+  const expensePct=total>0?Math.round(expense/total*100):0;
+
+  const summary=el('div','card');
+  summary.innerHTML=`
+    <div class="card-h">
+      <h3>📊 财务总结</h3>
+      <div class="cal-toggle">
+        <button class="cal-tg-btn ${acctPeriod==='year'?'active':''}" onclick="setAcctPeriod('year')">年</button>
+        <button class="cal-tg-btn ${acctPeriod==='month'?'active':''}" onclick="setAcctPeriod('month')">月</button>
+        <button class="cal-tg-btn ${acctPeriod==='week'?'active':''}" onclick="setAcctPeriod('week')">周</button>
+        <button class="cal-tg-btn ${acctPeriod==='day'?'active':''}" onclick="setAcctPeriod('day')">日</button>
+      </div>
+    </div>
+    <div class="acct-period-label">${periodLabel}</div>
+    <div class="acct-summary-row">
+      <div class="acct-sum-box income">
+        <div class="acct-sum-l">收入</div>
+        <div class="acct-sum-v">+${fmtMoney(income)}</div>
+      </div>
+      <div class="acct-sum-box expense">
+        <div class="acct-sum-l">支出</div>
+        <div class="acct-sum-v">-${fmtMoney(expense)}</div>
+      </div>
+      <div class="acct-sum-box net ${net>=0?'positive':'negative'}">
+        <div class="acct-sum-l">结余</div>
+        <div class="acct-sum-v">${net>=0?'+':''}${fmtMoney(net)}</div>
+      </div>
+    </div>
+    ${total>0?`<div class="acct-bar-chart">
+      <div class="acct-bar-container">
+        <div class="acct-bar income-bar" style="width:${incomePct}%"></div>
+        <div class="acct-bar expense-bar" style="width:${expensePct}%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text3)">
+        <span style="color:var(--green)">收入 ${incomePct}%</span>
+        <span style="color:var(--red)">支出 ${expensePct}%</span>
+      </div>
+    </div>`:''}
+    ${expense>0?`
+    <div class="acct-chart-row" style="margin-top:14px">
+      <div class="acct-pie">${makePie(catTotals,expense,periodLabel+'支出')}</div>
+      <div class="acct-legend">
+        ${CATEGORIES.map(c=>{
+          const val=catTotals[c.key]||0;
+          const pct=expense>0?Math.round(val/expense*100):0;
+          return `<div class="acct-leg">
+            <div class="acct-leg-l"><div class="acct-leg-d" style="background:${c.color}"></div>${c.icon} ${c.label}</div>
+            <div>¥${val.toLocaleString('zh-CN')} · ${pct}%</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`:''}`;
+  v.appendChild(summary);
+}
+
+function makePie(data,total,label){
+  if(total===0)return `<svg width="180" height="180" viewBox="0 0 180 180"><circle cx="90" cy="90" r="70" fill="none" stroke="#2a2a2a" stroke-width="28"/><text x="90" y="86" text-anchor="middle" font-size="20" font-weight="800" fill="#555">¥0</text><text x="90" y="104" text-anchor="middle" font-size="11" fill="#555">暂无支出</text></svg>`;
+  const C=2*Math.PI*70;
+  let offset=0;
+  let segments='';
+  CATEGORIES.forEach(c=>{
+    const val=data[c.key]||0;
+    if(val===0)return;
+    const pct=val/total;
+    const len=pct*C;
+    segments+=`<circle cx="90" cy="90" r="70" fill="none" stroke="${c.color}" stroke-width="28" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 90 90)"/>`;
+    offset+=len;
+  });
+  return `<svg width="180" height="180" viewBox="0 0 180 180">
+    <circle cx="90" cy="90" r="70" fill="none" stroke="#1a1a1a" stroke-width="28"/>
+    ${segments}
+    <text x="90" y="84" text-anchor="middle" font-size="18" font-weight="800" fill="#FFD60A">¥${total.toLocaleString('zh-CN')}</text>
+    <text x="90" y="102" text-anchor="middle" font-size="11" fill="#A0A0A0">${label||'支出'}</text>
+  </svg>`;
+}
+
+function setAcctPeriod(p){acctPeriod=p;render()}
+
+function editAccountName(id,text){
+  text=text.replace(/<[^>]+>/g,'').trim();
+  if(!text){render();return}
+  const accounts=DB.get('accounts',[]);
+  const a=accounts.find(x=>x.id===id);
+  if(a){a.name=text;DB.set('accounts',accounts)}
+  render();
+}
+function editAccountBal(id,text){
+  const num=parseFloat(String(text).replace(/[^0-9.-]/g,''));
+  if(isNaN(num)){render();return}
+  const accounts=DB.get('accounts',[]);
+  const a=accounts.find(x=>x.id===id);
+  if(a){a.balance=num;DB.set('accounts',accounts)}
+  render();
+}
+function delAccount(id){
+  confirmDialog('删除账户','删除账户将无法恢复，确定继续吗？',()=>{
+    DB.set('accounts',DB.get('accounts',[]).filter(a=>a.id!==id));
+    render();
+    toast('账户已删除');
+  });
+}
+
+function showAddAccount(){
+  showPopup(`
+    <div class="popup-h"><h3>添加账户</h3><button class="popup-close" onclick="closePopup()">✕</button></div>
+    <div class="field"><label>账户类型</label>
+      <select class="select" id="accType">
+        ${ACC_ICONS.map(i=>`<option value="${i.key}">${i.icon} ${i.label}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field"><label>账户名称</label><input class="input" id="accName" placeholder="如：招商银行储蓄卡"></div>
+    <div class="field"><label>当前余额</label><input class="input" id="accBal" type="number" placeholder="0.00" value="0"></div>
+    <button class="btn btn-y" style="width:100%" onclick="saveAccount()">添加账户</button>
+  `);
+}
+function saveAccount(){
+  const name=$('#accName').value.trim();
+  if(!name){toast('请输入账户名称');return}
+  const type=$('#accType').value;
+  const ai=ACC_ICONS.find(i=>i.key===type);
+  const accounts=DB.get('accounts',[]);
+  accounts.push({id:uid(),name,type,balance:parseFloat($('#accBal').value)||0,color:ai.color});
+  DB.set('accounts',accounts);
+  closePopup();
+  render();
+  toast('✅ 账户已添加');
+}
+
+let curTransType='expense';
+function showAddTrans(){
+  const accounts=DB.get('accounts',[]);
+  if(accounts.length===0){toast('请先添加账户');return}
+  curTransType='expense';
+  showPopup(`
+    <div class="popup-h"><h3>记一笔</h3><button class="popup-close" onclick="closePopup()">✕</button></div>
+    <div class="trans-type-toggle">
+      <button class="trans-type-btn active" id="ttExpense" onclick="setTransType('expense')">💸 支出</button>
+      <button class="trans-type-btn" id="ttIncome" onclick="setTransType('income')">💰 收入</button>
+    </div>
+    <input type="hidden" id="trType" value="expense">
+    <div class="field"><label>账户</label>
+      <select class="select" id="trAcc">
+        ${accounts.map(a=>`<option value="${a.id}">${a.name} (¥${a.balance.toLocaleString('zh-CN')})</option>`).join('')}
+      </select>
+    </div>
+    <div class="field"><label>金额</label><input class="input" id="trAmt" type="number" placeholder="0.00" step="0.01"></div>
+    <div class="field"><label>分类</label>
+      <select class="select" id="trCat">
+        ${CATEGORIES.map(c=>`<option value="${c.key}">${c.icon} ${c.label}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field"><label>备注</label><input class="input" id="trNote" placeholder="说明"></div>
+    <button class="btn btn-y" style="width:100%" onclick="saveTrans()">记录</button>
+  `);
+}
+function setTransType(type){
+  curTransType=type;
+  $('#trType').value=type;
+  $('#ttExpense').classList.toggle('active',type==='expense');
+  $('#ttIncome').classList.toggle('active',type==='income');
+  const cats=type==='income'?INCOME_CATEGORIES:CATEGORIES;
+  $('#trCat').innerHTML=cats.map(c=>`<option value="${c.key}">${c.icon} ${c.label}</option>`).join('');
+}
+function saveTrans(){
+  const amt=parseFloat($('#trAmt').value);
+  if(!amt||amt<=0){toast('请输入有效金额');return}
+  const type=$('#trType').value;
+  const accId=$('#trAcc').value;
+  const cat=$('#trCat').value;
+  const note=$('#trNote').value.trim();
+  const transactions=DB.get('transactions',[]);
+  transactions.push({id:uid(),type,accountId:accId,amount:amt,category:cat,note,date:Date.now()});
+  DB.set('transactions',transactions);
+  const accounts=DB.get('accounts',[]);
+  const acc=accounts.find(a=>a.id===accId);
+  if(acc){
+    if(type==='income')acc.balance+=amt;
+    else acc.balance-=amt;
+    DB.set('accounts',accounts);
+  }
+  closePopup();
+  render();
+  toast(type==='income'?'✅ 收入已记录':'✅ 支出已记录');
+}
+function delTrans(id){
+  confirmDialog('删除交易','确定删除这笔交易记录吗？',()=>{
+    const transactions=DB.get('transactions',[]);
+    const t=transactions.find(x=>x.id===id);
+    if(t){
+      const accounts=DB.get('accounts',[]);
+      const acc=accounts.find(a=>a.id===t.accountId);
+      if(acc){
+        if(t.type==='income')acc.balance-=t.amount;
+        else acc.balance+=t.amount;
+        DB.set('accounts',accounts);
+      }
+    }
+    DB.set('transactions',transactions.filter(x=>x.id!==id));
+    render();
+    toast('已删除');
+  });
+}
+
+// ====== Module: Calendar ======
+let calDate=new Date();
+let calView='month';
+let calSelDate=todayKey();
+
+function renderCalendar(v){
+  const todos=DB.get('todos',[]);
+  const card=el('div','card');
+  card.innerHTML=`
+    <div class="cal-h">
+      <div class="cal-m">${calDate.getFullYear()}年 ${calDate.getMonth()+1}月</div>
+      <div class="cal-nav">
+        <div class="cal-toggle">
+          <button class="cal-tg-btn ${calView==='month'?'active':''}" onclick="setCalView('month')">月历</button>
+          <button class="cal-tg-btn ${calView==='list'?'active':''}" onclick="setCalView('list')">清单</button>
+        </div>
+        <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+        <button class="cal-nav-btn" onclick="calToday()" style="font-size:11px;width:auto;padding:0 10px">今天</button>
+        <button class="cal-nav-btn" onclick="calNext()">›</button>
+      </div>
+    </div>`;
+  if(calView==='month'){
+    card.innerHTML+=renderCalGrid(todos);
+  }else{
+    card.innerHTML+=renderTodoList(todos);
+  }
+  card.innerHTML+=`
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <input class="input" id="todoInput" placeholder="快速添加待办（Enter提交）…" onkeydown="if(event.key==='Enter')quickAddTodo()">
+      <button class="btn btn-y" onclick="showAddTodo()">+ 批量添加</button>
+    </div>`;
+  v.appendChild(card);
+
+  // Selected day's todos
+  const dayTodos=todos.filter(t=>t.deadline===calSelDate).sort((a,b)=>{
+    if(a.completed!==b.completed)return a.completed?1:-1;
+    const pri={high:0,medium:1,low:2};
+    return pri[a.priority]-pri[b.priority];
+  });
+  const selCard=el('div','todo-list');
+  const selDate=new Date(calSelDate);
+  selCard.innerHTML=`<div class="card-h"><h3>📌 ${selDate.getFullYear()}年${selDate.getMonth()+1}月${selDate.getDate()}日 待办</h3><span class="tag tag-gray">${dayTodos.length} 项</span></div>`;
+  if(dayTodos.length===0){
+    selCard.innerHTML+='<div class="empty" style="padding:20px"><div class="empty-icon">🎯</div>当日无待办事项</div>';
+  }else{
+    dayTodos.forEach(t=>{
+      const item=el('div','todo-item');
+      item.innerHTML=`<div class="todo-pri ${t.priority}"></div>
+        <div class="todo-check ${t.completed?'done':''}" onclick="toggleTodo('${t.id}')"></div>
+        <div class="todo-content"><div class="todo-text ${t.completed?'done':''}">${escHtml(t.text)}</div>
+        <div class="todo-meta">
+          <span class="todo-time" onclick="editTodoDeadline('${t.id}')">⏰ ${t.deadline}</span>
+          <span class="tag tag-${t.priority==='high'?'r':t.priority==='medium'?'y':'g'}">${t.priority==='high'?'高优先级':t.priority==='medium'?'中优先级':'低优先级'}</span>
+          ${t.completed?'<span class="tag tag-g">已完成</span>':''}
+          <button class="todo-del" onclick="delTodo('${t.id}')">删除</button>
+        </div></div>`;
+      selCard.appendChild(item);
+    });
+  }
+  v.appendChild(selCard);
+}
+function renderCalGrid(todos){
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  const first=new Date(y,m,1);
+  const startDay=first.getDay()===0?6:first.getDay()-1;
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const todayStr=todayKey();
+  let html='<div class="cal-grid">';
+  ['一','二','三','四','五','六','日'].forEach(d=>html+=`<div class="cal-dn">${d}</div>`);
+  const prevDays=new Date(y,m,0).getDate();
+  for(let i=startDay-1;i>=0;i--)html+=`<div class="cal-day other">${prevDays-i}</div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasTask=todos.some(t=>t.deadline===ds&&!t.completed);
+    const cls=['cal-day'];
+    if(ds===todayStr)cls.push('today');
+    if(hasTask)cls.push('has-task');
+    if(ds===calSelDate)cls.push('sel');
+    html+=`<div class="${cls.join(' ')}" onclick="selCalDay('${ds}')">${d}</div>`;
+  }
+  const totalCells=startDay+daysInMonth;
+  const remaining=(7-totalCells%7)%7;
+  for(let d=1;d<=remaining;d++)html+=`<div class="cal-day other">${d}</div>`;
+  html+='</div>';
+  return html;
+}
+function renderTodoList(todos){
+  const sorted=todos.sort((a,b)=>{
+    if(a.deadline!==b.deadline)return a.deadline.localeCompare(b.deadline);
+    const pri={high:0,medium:1,low:2};
+    return pri[a.priority]-pri[b.priority];
+  });
+  if(sorted.length===0)return '<div class="empty" style="margin-top:14px"><div class="empty-icon">🎯</div>暂无待办事项</div>';
+  let html='<div class="todo-list" style="margin-top:14px">';
+  sorted.forEach(t=>{
+    const pri={high:'r',medium:'y',low:'g'}[t.priority];
+    html+=`<div class="todo-item">
+      <div class="todo-pri ${t.priority}"></div>
+      <div class="todo-check ${t.completed?'done':''}" onclick="toggleTodo('${t.id}')"></div>
+      <div class="todo-content"><div class="todo-text ${t.completed?'done':''}">${escHtml(t.text)}</div>
+      <div class="todo-meta">
+        <span class="todo-time" onclick="editTodoDeadline('${t.id}')">⏰ ${t.deadline}</span>
+        <span class="tag tag-${pri}">${t.priority==='high'?'高':t.priority==='medium'?'中':'低'}优先级</span>
+        ${t.completed?'<span class="tag tag-g">已完成</span>':''}
+        <button class="todo-del" onclick="delTodo('${t.id}')">删除</button>
+      </div></div>
+    </div>`;
+  });
+  html+='</div>';
+  return html;
+}
+function selCalDay(ds){calSelDate=ds;render()}
+function setCalView(v){calView=v;render()}
+function calPrev(){calDate.setMonth(calDate.getMonth()-1);render()}
+function calNext(){calDate.setMonth(calDate.getMonth()+1);render()}
+function calToday(){calDate=new Date();calSelDate=todayKey();render()}
+
+function quickAddTodo(){
+  const input=$('#todoInput');
+  const txt=input.value.trim();
+  if(!txt)return;
+  const todos=DB.get('todos',[]);
+  todos.push({id:uid(),text:txt,deadline:calSelDate,priority:'medium',completed:false});
+  DB.set('todos',todos);
+  input.value='';
+  render();
+  buildNav();
+}
+function showAddTodo(){
+  showPopup(`
+    <div class="popup-h"><h3>批量添加待办</h3><button class="popup-close" onclick="closePopup()">✕</button></div>
+    <div class="field"><label>事项内容（每行一个，支持批量添加）</label>
+      <textarea class="textarea" id="todoText" placeholder="每行输入一个待办事项…" style="min-height:120px"></textarea>
+    </div>
+    <div class="row">
+      <div class="field"><label>截止日期</label><input class="input" id="todoDeadline" type="date" value="${calSelDate}"></div>
+      <div class="field"><label>优先级</label>
+        <select class="select" id="todoPri">
+          <option value="high">🔴 高</option>
+          <option value="medium" selected>🟡 中</option>
+          <option value="low">🟢 低</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-y" style="width:100%" onclick="saveTodoBatch()">添加</button>
+  `);
+}
+function saveTodoBatch(){
+  const text=$('#todoText').value.trim();
+  const deadline=$('#todoDeadline').value;
+  const priority=$('#todoPri').value;
+  if(!text){toast('请输入事项内容');return}
+  if(!deadline){toast('请选择截止日期');return}
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length===0){toast('请输入事项内容');return}
+  const todos=DB.get('todos',[]);
+  lines.forEach(line=>{todos.push({id:uid(),text:line,deadline,priority,completed:false})});
+  DB.set('todos',todos);
+  closePopup();
+  render();
+  buildNav();
+  toast(`✅ 已添加 ${lines.length} 项待办`);
+}
+function editTodoDeadline(id){
+  const todos=DB.get('todos',[]);
+  const t=todos.find(x=>x.id===id);
+  if(!t)return;
+  showPopup(`
+    <div class="popup-h"><h3>修改截止日期</h3><button class="popup-close" onclick="closePopup()">✕</button></div>
+    <div class="field"><label>事项</label><div style="padding:10px;background:var(--bg-inset);border-radius:9px;font-size:13px;border:1px solid var(--border)">${escHtml(t.text)}</div></div>
+    <div class="field"><label>截止日期</label><input class="input" id="editDeadline" type="date" value="${t.deadline}"></div>
+    <div class="field"><label>优先级</label>
+      <select class="select" id="editPri">
+        <option value="high" ${t.priority==='high'?'selected':''}>🔴 高</option>
+        <option value="medium" ${t.priority==='medium'?'selected':''}>🟡 中</option>
+        <option value="low" ${t.priority==='low'?'selected':''}>🟢 低</option>
+      </select>
+    </div>
+    <button class="btn btn-y" style="width:100%" onclick="saveTodoEdit('${id}')">保存</button>
+  `);
+}
+function saveTodoEdit(id){
+  const deadline=$('#editDeadline').value;
+  const priority=$('#editPri').value;
+  if(!deadline){toast('请选择日期');return}
+  const todos=DB.get('todos',[]);
+  const t=todos.find(x=>x.id===id);
+  if(t){t.deadline=deadline;t.priority=priority;DB.set('todos',todos)}
+  closePopup();
+  render();
+  buildNav();
+  toast('✅ 已更新');
+}
+function toggleTodo(id){
+  const todos=DB.get('todos',[]);
+  const t=todos.find(x=>x.id===id);
+  if(t){t.completed=!t.completed;t.completedAt=t.completed?Date.now():null;DB.set('todos',todos)}
+  render();
+  buildNav();
+}
+function delTodo(id){
+  DB.set('todos',DB.get('todos',[]).filter(t=>t.id!==id));
+  render();
+  buildNav();
+}
+
+// ====== Module Registry ======
+const Modules={
+  diary:renderDiary,
+  notes:renderNotes,
+  media:renderMedia,
+  accounting:renderAccounting,
+  calendar:renderCalendar,
+};
+
+// ====== Mobile sidebar ======
+$('#mobileMenuBtn').onclick=()=>{$('#sidebar').classList.add('open');$('#scrim').classList.add('show')};
+$('#scrim').onclick=()=>{$('#sidebar').classList.remove('open');$('#scrim').classList.remove('show')};
+
+// ====== Popup close on backdrop ======
+$('#popup').onclick=e=>{if(e.target===$('#popup'))closePopup()};
+
+// ====== PWA ======
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  $('#installBtn').style.display='flex';
+});
+$('#installBtn').onclick=async()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const {outcome}=await deferredPrompt.userChoice;
+    if(outcome==='accepted')toast('✅ 安装成功！');
+    deferredPrompt=null;
+    $('#installBtn').style.display='none';
+  }else{
+    toast('请使用浏览器菜单"添加到主屏幕"');
+  }
+};
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// ====== Init ======
+buildNav();
+setupNavInteractions();
+navigate('diary');
+</script>
+</body>
+</html>

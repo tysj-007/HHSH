@@ -1,0 +1,22 @@
+{
+  "name": "好好生活",
+  "short_name": "好好生活",
+  "description": "集日记、灵感速记、观影阅读、记账看板、日历待办于一体的个人生活工作台",
+  "start_url": "./dashboard.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0b0b",
+  "theme_color": "#FFD60A",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["productivity", "lifestyle"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
